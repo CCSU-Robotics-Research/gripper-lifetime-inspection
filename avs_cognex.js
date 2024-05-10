@@ -2,6 +2,7 @@ const { Pool } = require('pg');
 const WebSocket = require('ws');
 const CogSocket = require("./cogsocket");
 const fs = require('fs');
+const path = require('path');
 const axios = require('axios');
 
 // Create a PostgreSQL connection pool
@@ -15,7 +16,8 @@ const pool = new Pool({
 
 
 // Connection settings for InSight 3805
-const ip = "169.254.26.207:80"
+// const ip = "169.254.26.207:80"
+const ip = "169.254.28.246:80"
 const wsUrl = `ws://${ip}/ws`; // for real-time data
 const httpUrl = `http://${ip}`; // for image data
 var sessionID = ""; // Example: "cam0/hmi/hs/~e12b16bc"
@@ -24,7 +26,7 @@ console.log("Creating new CogSocket(\"" + wsUrl + "\")");
 const cogsock = new CogSocket(new WebSocket(wsUrl), null, 2);
 
 // this line is needed to see the log messages from the CogSocket
-cogsock.log = console.log;
+// cogsock.log = console.log;
 
 
 // The onopen event occurs when the connection is open
@@ -62,6 +64,7 @@ function onOpenHandler() {
 function onOpenSession(data) {
   // Set the sessionID. For example: "cam0/hmi/hs/~e12b16bc"
   sessionID = data;
+  console.log("SessionID: ", sessionID);
 
   // The login data: [username, password, something idk]
   const body = ["admin", "", false];
@@ -96,29 +99,29 @@ function onLogin(data) {
 }
 
 function onStateChanged(data) {
-  console.log(data);
+  console.log("StateChanged:", data);
 }
 
 function onSoftOnline(data) {
-  console.log("softonline", data);
+  console.log("SoftOnline:", data);
 }
 
 function onStateRead(data) {
-  console.log(data);
+  console.log("StateRead:", data);
 }
 
 // The onResultChanged function is called when the result is changed
 // This is where we process the data
 function onResultChanged(hmiResult) {
-  console.log('onResultChanged', hmiResult);
+  console.log('ResultChanged:', hmiResult);
 
-  // Do stuff here :)
+  
   const imageUrl = httpUrl + hmiResult.acqImageView.layers[0].url;
-
+  const dest = `images/${hmiResult.id}.bmp`
   // Download the image
   // url: the url of the image
   // destination: the destination to save the image
-  downloadImage(imageUrl, hmiResult.id);
+  downloadImage(imageUrl, dest);
 
   // Write the results to the PostgreSQL database
   writeResults(hmiResult.cells);
@@ -148,13 +151,19 @@ function dispose() {
 
 
 // Download the image
-// url: the url of the image
+// imageUrl: the url of the image
 // destination: the destination to save the image
-const downloadImage = async (url, destination) => {
+const downloadImage = async (imageUrl, destination) => {
   try {
+    // Ensure the directory exists
+    const dir = path.dirname(destination);
+    if (!fs.existsSync(dir)){
+      fs.mkdirSync(dir, { recursive: true });
+    }
+
     const response = await axios({
       method: 'GET',
-      url: url,
+      url: imageUrl,
       responseType: 'stream'
     });
 
