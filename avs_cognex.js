@@ -124,7 +124,7 @@ function onResultChanged(hmiResult) {
   downloadImage(imageUrl, dest);
 
   // Write the results to the PostgreSQL database
-  writeResults(hmiResult.cells);
+  writeResults(hmiResult);
 
   // Tell the server that we are ready
   sendReady();
@@ -203,31 +203,33 @@ function onTrigger(data) {
 }
 
 // write the results to the PostgreSQL database
-// for some reason, parameter must be called result1 instead of result
-async function writeResults(result1) {
+// pass in the entire hmiResult object!
+async function writeResults(hmiResult) {
   // console.log('cells' + JSON.stringify(result.cells).length);
+  // console.log('writeresults\n')
+  // console.log(hmiResult);
   try {
     // Create an object to hold the indexed data
     const indexedCells = {};
 
     // Loop through the cells array and index by location
-    result1.cells.forEach(cell => {
+    hmiResult.cells.forEach(cell => {
         indexedCells[cell.location] = cell;
     });
-    const part_id = result.acqImageView.id;
+    const part_id = hmiResult.acqImageView.id;
     // Define the data to be inserted into the table
     const dataToInsert = {
       part_id: part_id,
-      camera_view: indexedCells['C6'].data,
-      gripper_x: indexedCells['D6'].data,
-      gripper_y: indexedCells['E6'].data,
-      gripper_r: indexedCells['F6'].data,
-      part_x: indexedCells['G6'].data,
-      part_y: indexedCells['H6'].data,
-      part_r: indexedCells['I6'].data
+      camera_view: indexedCells['C6'],
+      gripper_x: indexedCells['D6'],
+      gripper_y: indexedCells['E6'],
+      gripper_r: indexedCells['F6'],
+      part_x: indexedCells['G6'],
+      part_y: indexedCells['H6'],
+      part_r: indexedCells['I6']
     };
 
-    if (dataToInsert.gripper_x === '') {
+    if (dataToInsert.gripper_x === '' || dataToInsert.part_x === '') {
       console.log("Empty results. Not posting to database");
       return;
     }
