@@ -214,7 +214,7 @@ async function writeResults(hmiResult) {
 
     // Loop through the cells array and index by location
     hmiResult.cells.forEach(cell => {
-        indexedCells[cell.location] = cell;
+        indexedCells[cell.location] = cell.data;
     });
     const part_id = hmiResult.acqImageView.id;
     // Define the data to be inserted into the table
