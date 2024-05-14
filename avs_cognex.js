@@ -16,8 +16,8 @@ const pool = new Pool({
 
 
 // Connection settings for InSight 3805
-// const ip = "169.254.26.207:80"
-const ip = "169.254.28.246:80"
+const ip = "169.254.26.207:80"
+// const ip = "169.254.28.246:80"
 const wsUrl = `ws://${ip}/ws`; // for real-time data
 const httpUrl = `http://${ip}`; // for image data
 var sessionID = ""; // Example: "cam0/hmi/hs/~e12b16bc"
@@ -117,7 +117,7 @@ function onResultChanged(hmiResult) {
 
   
   const imageUrl = httpUrl + hmiResult.acqImageView.layers[0].url;
-  const dest = `images/${hmiResult.id}.bmp`
+  const dest = `images/${hmiResult.acqImageView.id}.bmp`
   // Download the image
   // url: the url of the image
   // destination: the destination to save the image
